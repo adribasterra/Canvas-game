@@ -56,7 +56,7 @@ class MapCreator {
             ],
             //Turrets       x, y, radius, color, speed, shootRate, maxTimeAlive
             turrets : [
-                { x:  60, y: 200, r: 120, color: "", speed: 0, shootRate: 10, maxTimeAlive: 100 }
+                { x:  980, y: 100, r: 30, color: "", speed: 0, shootRate: 2, maxTimeAlive: 5 }
             ],
             //Enemies
             enemies : {

@@ -82,31 +82,28 @@ function Update(deltaTime){
     //console.log("This is the update after " + delta + " ms.");
     game.player.update(deltaTime);
 
-    for(var enemy in game.objects.enemies){
-        enemy.update(deltaTime);
-        if(aabbCollision(enemy.ball, game.player, true, true) && keyPressed[controls.playerKILL]) {
-            enemy.dead = true;
+    for(var i = 0; i<game.objects.enemies.length; i++){
+        game.objects.enemies[i].update(deltaTime);
+        if(aabbCollision(game.objects.enemies[i].ball, game.player, true, true, true) && keyPressed[controls.playerKILL]) {
+            game.objects.enemies[i].dead = true;
         }
     }
 
-    for(var turret in game.objects.turrets) {
-        if(aabbCollision(turret, game.player, true, true) && keyPressed[controls.playerKILL]){
-            turret.dead = true;
+    for(var i = 0; i<game.objects.turrets.length; i++) {
+        if(aabbCollision(game.objects.turrets[i], game.player, true, true, true) && keyPressed[controls.playerKILL]){
+            game.objects.turrets[i].dead = true;
         }
-        for (var missile in turret.missiles){
-            missile.update();
-            if(aabbCollision(missile, game.player, true, true)){
-                game.player.lowerStealth();
-                missile = null;
+        for (var j = 0; j<game.objects.turrets[i].missiles.length; j++){
+            if(game.objects.turrets[i].missiles[j] != null){
+                game.objects.turrets[i].missiles[j].update(deltaTime);
+                if(aabbCollision(game.objects.turrets[i].missiles[j], game.player, true, true, false)){
+                    var times = 20;
+                    while(times-- > 0) game.player.lowerStealth();
+                    game.objects.turrets[i].missiles[j] = null;
+                }
             }
         }
-    }
-
-
-    for(var i = 0; i<game.objects.turrets.length; i++){
-        for (var missile in game.objects.turrets[i].missiles){
-            missile.update();
-        }
+        game.objects.turrets[i].update(deltaTime);
     }
 }
 
@@ -132,11 +129,9 @@ function Render(){
         }
 
         for(var i = 0; i<game.objects.turrets.length; i++){
-            for(var turret in game.objects.turrets) {
-                turret.render(game.context);
-                for (var missile in turret){
-                    missile.render(game.context);
-                }
+            game.objects.turrets[i].ownRender(game.context);
+            for (var j = 0; j<game.objects.turrets[i].missiles.length; j++){
+                if(game.objects.turrets[i].missiles[j] != null) game.objects.turrets[i].missiles[j].render(game.context);
             }
         }
 
@@ -229,7 +224,7 @@ class Player{
         }
 
         //Check key
-        if(aabbCollision(this, game.objects.key, true, false)){
+        if(aabbCollision(this, game.objects.key, true, false, false)){
             this.hasKey = true;
         }
 
@@ -265,7 +260,7 @@ class Player{
         context.stroke(this.area);
 
         //Check if reached finish line
-        if(aabbCollision(this, game.objects.finish, true, false) && this.hasKey){
+        if(aabbCollision(this, game.objects.finish, true, false, false) && this.hasKey){
             this.finish = true;
         }
     }
@@ -308,7 +303,7 @@ class Ball{
     }
 
     collision(gameObject){
-        if(aabbCollision(this, gameObject, true, true)){
+        if(aabbCollision(this, gameObject, true, true, false)){
             return true;
         }
         return false;
@@ -415,7 +410,7 @@ class Enemy{
     }
 
     collision(gameObject, deltaTime){
-        if(aabbCollision(this.ball, gameObject, true, false)){
+        if(aabbCollision(this.ball, gameObject, true, false, false)){
             this.arc.x -= deltaTime / 1000 * this.speed;
             this.ball.x -= deltaTime / 1000 * this.speed;
             this.speed = -this.speed;
@@ -489,23 +484,24 @@ class Turret extends Ball{
             this.lastTimeShot += deltaTime/1000;
             if(this.lastTimeShot > this.shootRate){
                 this.lastTimeShot = 0;
-                shoot();
+                this.shoot();
             }
-            for(var i = 0; i<this.missiles.length; i++){
-                if(this.missiles[i].timeAlive > this.maxTimeAlive){
-                    balls[i] = null;
+        }
+        for(var i = 0; i<this.missiles.length; i++){
+            if(this.missiles[i] != null){
+                if(this.missiles[i] != null && this.missiles[i].timeAlive > this.maxTimeAlive){
+                    this.missiles[i] = null;
                 }
             }
         }
     }
 
-    render(context){
-        if(!this.dead) super.render(context, dead);
+    ownRender(context){
+        super.render(context, this.dead);
     }
 
     shoot(){
-        balls[this.numMissiles++] = new Missile(this.x, this.y, 10, "#000000", 200);
-        
+        this.missiles[this.numMissiles++] = new Missile(this.x, this.y, 10, "#D0D0D0", 100);
     }
 }
 
@@ -516,19 +512,17 @@ class Missile extends Ball{
         this.timeAlive = 0;
     }
 
-    follow(deltaTime){
+    update(deltaTime){
         this.timeAlive += deltaTime/1000;
         this.x += Math.sign(this.player.x - this.x) * this.speed * deltaTime/1000;
         this.y += Math.sign(this.player.y - this.y) * this.speed * deltaTime/1000;
-    }
-
-    update(){
-        for(var i = 0; i<game.objects.boxes; i++){
-            if(aabbCollision(this, game.objects.balls[i], true, false)){
-                this.timeAlive = 10000;
+        for(var i = 0; i<game.objects.boxes.length; i++){
+            if(aabbCollision(this, game.objects.boxes[i], true, false, false)){
+                this.timeAlive = 1000000;
             }
         }
     }
+
 }
 
 //#endregion
@@ -536,18 +530,18 @@ class Missile extends Ball{
 
 function CheckPlayerCollisionWithWalls(){
     for (var i = 0; i < game.objects.boxes.length; i++) {
-        if(aabbCollision(game.player, game.objects.boxes[i], true, false)){
+        if(aabbCollision(game.player, game.objects.boxes[i], true, false, false)){
             return i;
         }
 	}
 	return -1;
 }
 
-function aabbCollision(object1, object2, _1isBall, _2isBall) {
+function aabbCollision(object1, object2, _1isBall, _2isBall, area) {
     if(_1isBall){
         var size1 = object1.radius * 2;
         if(_2isBall){
-            var size2 = object2.radius * 2;
+            var size2 = area ? object2.radius * 4 : object2.radius * 2;
             if (object1.x < object2.x + size2 && size1 + object1.x > object2.x &&
                 object1.y < object2.y + size2 && size1 + object1.y > object2.y)
             {
@@ -603,17 +597,9 @@ function LoadLevel(){
         game.objects.boxes[i] = new Box(boxData.x, boxData.y, width, height, level1.config.boxes.color, level1.config.boxes.fill);
     }
 
-    //                                  Turrets
-    // ----------------------------------------------------------------------------- //
-    for(var i = 0; i<level1.turrets.length; i++){
-        var turretData = level1.turrets[i];
-        game.objects.turrets[i] = new Turret(turretData.x, turretData.y, turretData.r, turretData.color, turretData.speed, turretData.shootRate, turretData.maxTimeAlive);
-    }
-    
-
     //                                  Enemies
     // ----------------------------------------------------------------------------- //
-    for(var i = 0; i<level1.enemies.length; i++){
+    for(var i = 0; i<9; i++){
         var ballsData = level1.enemies.balls[i];
         var arcsData  = level1.enemies.arcs[i];
         var ball = new Ball(ballsData.x, ballsData.y, level1.config.balls.radius, level1.config.balls.color);
@@ -621,6 +607,14 @@ function LoadLevel(){
         game.objects.enemies[i] = new Enemy(ball, arc, creator.level1.enemies.speeds[i], creator.level1.enemies.types[i]);
     }
 
+
+    //                                  Turrets
+    // ----------------------------------------------------------------------------- //
+    for(var i = 0; i<level1.turrets.length; i++){
+        var turretData = level1.turrets[i];
+        game.objects.turrets[i] = new Turret(turretData.x, turretData.y, turretData.r, turretData.color, turretData.speed, turretData.shootRate, turretData.maxTimeAlive);
+    }
+    
     
     //                                  Others
     // ----------------------------------------------------------------------------- //
