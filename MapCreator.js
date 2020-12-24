@@ -54,7 +54,10 @@ class MapCreator {
                 { x: 250,    y: 200,   w:  270,   h:  -1 },     //Horizontal wall 1
                 { x: 600,    y: 500,   w:  330,   h:  -1 }
             ],
-            
+            //Turrets       x, y, radius, color, speed, shootRate, maxTimeAlive
+            turrets : [
+                { x:  60, y: 200, r: 120, color: "", speed: 0, shootRate: 10, maxTimeAlive: 100 }
+            ],
             //Enemies
             enemies : {
                 balls : [

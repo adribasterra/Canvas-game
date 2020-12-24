@@ -39,6 +39,7 @@ function Init(){
             boxes : [],
             walls : [],
             enemies : [],
+            turrets : [],
             finish : undefined,
             stealth : undefined
         }
@@ -81,10 +82,30 @@ function Update(deltaTime){
     //console.log("This is the update after " + delta + " ms.");
     game.player.update(deltaTime);
 
-    for(var i = 0; i<game.objects.enemies.length; i++){
-        game.objects.enemies[i].update(deltaTime);
-        if(aabbCollision(game.objects.enemies[i].ball, game.player, true, true) && keyPressed[controls.playerKILL]) {
-            game.objects.enemies[i].dead = true;
+    for(var enemy in game.objects.enemies){
+        enemy.update(deltaTime);
+        if(aabbCollision(enemy.ball, game.player, true, true) && keyPressed[controls.playerKILL]) {
+            enemy.dead = true;
+        }
+    }
+
+    for(var turret in game.objects.turrets) {
+        if(aabbCollision(turret, game.player, true, true) && keyPressed[controls.playerKILL]){
+            turret.dead = true;
+        }
+        for (var missile in turret.missiles){
+            missile.update();
+            if(aabbCollision(missile, game.player, true, true)){
+                game.player.lowerStealth();
+                missile = null;
+            }
+        }
+    }
+
+
+    for(var i = 0; i<game.objects.turrets.length; i++){
+        for (var missile in game.objects.turrets[i].missiles){
+            missile.update();
         }
     }
 }
@@ -110,6 +131,15 @@ function Render(){
             game.objects.boxes[i].render(game.context);
         }
 
+        for(var i = 0; i<game.objects.turrets.length; i++){
+            for(var turret in game.objects.turrets) {
+                turret.render(game.context);
+                for (var missile in turret){
+                    missile.render(game.context);
+                }
+            }
+        }
+
         for(var i = 0; i<game.objects.enemies.length; i++){
             game.objects.enemies[i].render(game.context);
         }
@@ -123,7 +153,7 @@ function Render(){
 
 //#region Classes
 
-class Rectangle {
+class Box {
     constructor(x, y, width, height, color, fill){
         this.x = x;
         this.y = y;
@@ -248,7 +278,7 @@ class Player{
     }
 }
 
-class Bola{
+class Ball{
     constructor(x, y, radius, color, speed){
         this.x = x;
         this.y = y;
@@ -277,12 +307,13 @@ class Bola{
         context.fill(this.path);
     }
 
-    collision(context, gameObject){
+    collision(gameObject){
         if(aabbCollision(this, gameObject, true, true)){
             return true;
         }
         return false;
-		/*
+
+        //#region  Attempt
         if(context.isPointInPath(this.path, gameObject.x, gameObject.y, "nonzero")){
             return true;
         }
@@ -297,7 +328,7 @@ class Bola{
             }
         }
 		return false;
-		*/
+        //#endregion
     }
 }
 
@@ -442,6 +473,64 @@ class EndGame {
     }
 }
 
+class Turret extends Ball{
+    constructor(x, y, radius, color, speed, shootRate, maxTimeAlive){
+        super(x, y, radius, color, speed);
+        this.shootRate = shootRate;
+        this.missiles = [];
+        this.numMissiles = 0;
+        this.lastTimeShot = 0;
+        this.maxTimeAlive = maxTimeAlive;
+        this.dead = false;
+    }
+
+    update(deltaTime){
+        if(!this.dead){
+            this.lastTimeShot += deltaTime/1000;
+            if(this.lastTimeShot > this.shootRate){
+                this.lastTimeShot = 0;
+                shoot();
+            }
+            for(var i = 0; i<this.missiles.length; i++){
+                if(this.missiles[i].timeAlive > this.maxTimeAlive){
+                    balls[i] = null;
+                }
+            }
+        }
+    }
+
+    render(context){
+        if(!this.dead) super.render(context, dead);
+    }
+
+    shoot(){
+        balls[this.numMissiles++] = new Missile(this.x, this.y, 10, "#000000", 200);
+        
+    }
+}
+
+class Missile extends Ball{
+    constructor(x, y, radius, color, speed){
+        super(x, y, radius, color, speed);
+        this.player = game.player;
+        this.timeAlive = 0;
+    }
+
+    follow(deltaTime){
+        this.timeAlive += deltaTime/1000;
+        this.x += Math.sign(this.player.x - this.x) * this.speed * deltaTime/1000;
+        this.y += Math.sign(this.player.y - this.y) * this.speed * deltaTime/1000;
+    }
+
+    update(){
+        for(var i = 0; i<game.objects.boxes; i++){
+            if(aabbCollision(this, game.objects.balls[i], true, false)){
+                this.timeAlive = 10000;
+            }
+        }
+    }
+}
+
 //#endregion
 
 
@@ -496,7 +585,7 @@ function LoadLevel(){
     //                                  Grid
     // ----------------------------------------------------------------------------- //
     var gridData = level1.grid;
-    game.grid = new Rectangle(gridData.x, gridData.y, gridData.w, gridData.h, gridData.color, gridData.fill);
+    game.grid = new Box(gridData.x, gridData.y, gridData.w, gridData.h, gridData.color, gridData.fill);
     
 
     //                                  Player
@@ -507,20 +596,27 @@ function LoadLevel(){
 
     //                                  Boxes
     // ----------------------------------------------------------------------------- //
-    for(var i = 0; i<8; i++){
+    for(var i = 0; i<level1.boxes.length; i++){
         var boxData = level1.boxes[i];
         var width   = boxData.w == -1 ? level1.config.boxes.size : boxData.w;
         var height  = boxData.h == -1 ? level1.config.boxes.size : boxData.h;
-        game.objects.boxes[i] = new Rectangle(boxData.x, boxData.y, width, height, level1.config.boxes.color, level1.config.boxes.fill);
+        game.objects.boxes[i] = new Box(boxData.x, boxData.y, width, height, level1.config.boxes.color, level1.config.boxes.fill);
     }
 
+    //                                  Turrets
+    // ----------------------------------------------------------------------------- //
+    for(var i = 0; i<level1.turrets.length; i++){
+        var turretData = level1.turrets[i];
+        game.objects.turrets[i] = new Turret(turretData.x, turretData.y, turretData.r, turretData.color, turretData.speed, turretData.shootRate, turretData.maxTimeAlive);
+    }
+    
 
     //                                  Enemies
     // ----------------------------------------------------------------------------- //
-    for(var i = 0; i<9; i++){
+    for(var i = 0; i<level1.enemies.length; i++){
         var ballsData = level1.enemies.balls[i];
         var arcsData  = level1.enemies.arcs[i];
-        var ball = new Bola(ballsData.x, ballsData.y, level1.config.balls.radius, level1.config.balls.color);
+        var ball = new Ball(ballsData.x, ballsData.y, level1.config.balls.radius, level1.config.balls.color);
         var arc = new Arco(arcsData.x, arcsData.y, arcsData.r, arcsData.angle, arcsData.speed, level1.config.arcs.color);
         game.objects.enemies[i] = new Enemy(ball, arc, creator.level1.enemies.speeds[i], creator.level1.enemies.types[i]);
     }
@@ -531,7 +627,7 @@ function LoadLevel(){
 
     //Key
     var keyData = level1.key;
-    game.objects.key = new Rectangle(keyData.x, keyData.y, keyData.size, keyData.size, keyData.color, keyData.fill);
+    game.objects.key = new Box(keyData.x, keyData.y, keyData.size, keyData.size, keyData.color, keyData.fill);
 
     //Stealth bar
     var stealthData = level1.stealth;
@@ -539,7 +635,7 @@ function LoadLevel(){
 
     //Finish line
     var finishData = level1.finish;
-    game.objects.finish = new Rectangle(finishData.x, finishData.y, finishData.w, finishData.h, finishData.color, level1.config.boxes.fill);
+    game.objects.finish = new Box(finishData.x, finishData.y, finishData.w, finishData.h, finishData.color, level1.config.boxes.fill);
     
     //End screens
     game.grid.winScreen = new EndGame(level1.config.screens.background, level1.config.screens.color, level1.endScreens.win.text);
