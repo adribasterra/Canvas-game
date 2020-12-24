@@ -119,3 +119,328 @@ function Render(){
     }
 }
 //#endregion
+
+
+//#region Classes
+
+class Rectangle {
+    constructor(x, y, width, height, color, fill){
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+        this.fillStyle = color;
+        this.fill = fill;
+        this.initPath();
+    }
+    
+    initPath(){
+        this.path = new Path2D();
+        this.path.rect(this.x, this.y, this.width, this.height);
+        this.path.closePath();
+    }
+
+    render(context){
+        context.fillStyle = this.fillStyle;
+        if(this.fill) context.fill(this.path);
+        else context.stroke(this.path);
+    }
+}
+
+class Player{
+    constructor(x, y, radius, color, speed){
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.speed = speed;
+        this.hidden = false;
+        this.once = true;
+        this.hasKey = false;
+        this.stealth = 100;
+        this.dead = false;
+        this.finish = false;
+        this.area = undefined;
+    }
+
+    update(deltaTime) {
+        //Movement with keys
+        if(!this.hidden){
+            var num;
+            if (keyPressed[controls.playerUP]) {        // Player holding up
+                this.y -= this.speed * deltaTime/1000;
+                num = CheckPlayerCollisionWithWalls();
+                if(num != -1) this.y = game.objects.boxes[num].y + this.radius *2;
+            }
+            if (keyPressed[controls.playerDOWN]) {      // Player holding down
+                this.y += this.speed * deltaTime/1000;
+                num = CheckPlayerCollisionWithWalls();
+                if(num != -1) this.y = game.objects.boxes[num].y - this.radius *2;
+            } 
+            if (keyPressed[controls.playerLEFT]) {      // Player holding left
+                this.x -= this.speed * deltaTime/1000;
+                num = CheckPlayerCollisionWithWalls();
+                if(num != -1) this.x = game.objects.boxes[num].x - this.radius *2;
+            }
+            if (keyPressed[controls.playerRIGHT]) {     // Player holding right
+                this.x += this.speed * deltaTime/1000;
+                num = CheckPlayerCollisionWithWalls();
+                if(num != -1) this.x = game.objects.boxes[num].x - this.radius;
+            }
+        }
+
+        if (keyPressed[controls.playerHIDE] && this.once) {
+            this.hidden = !this.hidden;
+            this.once = false;
+        }
+
+        if(!keyPressed[controls.playerHIDE]){
+            this.once = true;
+        }
+
+        //Check key
+        if(aabbCollision(this, game.objects.key, true, false)){
+            this.hasKey = true;
+        }
+
+        //Movement with mouse
+        if(follow){
+            this.x += Math.sign(mouseX - this.x) * this.speed * deltaTime/1000;
+            this.y += Math.sign(mouseY - this.y) * this.speed * deltaTime/1000;
+            if(Math.abs(mouseX - this.x) < 1){  //To avoid shaking
+                this.x = mouseX;
+            }
+            if(Math.abs(mouseY - this.y) < 1){
+                this.y = mouseY;
+            }
+            if(this.x == mouseX && this.y == mouseY){
+                follow = false;
+            }
+        }
+    }
+
+    render(context) {
+        this.path = new Path2D();
+        this.area = new Path2D();
+        if(this.hidden) {
+            this.path.rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+            context.fillStyle = "#00FFFF";
+        }
+        else{
+            this.path.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, true);
+            context.fillStyle = this.color;
+            this.area.arc(this.x, this.y, this.radius * 2, 0, 2 * Math.PI, true);
+        }
+        context.fill(this.path);
+        context.stroke(this.area);
+
+        //Check if reached finish line
+        if(aabbCollision(this, game.objects.finish, true, false) && this.hasKey){
+            this.finish = true;
+        }
+    }
+
+    lowerStealth(){
+        this.stealth--;
+        if(this.stealth < 0){
+            this.dead = true;
+        }
+    }
+}
+
+class Bola{
+    constructor(x, y, radius, color, speed){
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.speed = speed;
+    }
+
+    move(deltaTime, speed){
+        this.x += deltaTime / 1000 * speed;
+        for (var j = 0; j < game.objects.boxes.length; j++) 
+        {
+            if(this.collision(game.context, game.objects.boxes[j]))
+            {
+                this.x -= deltaTime / 1000 * speed;
+                this.speed *= -1;
+            }
+        }
+    }
+    
+    render(context, dead) {
+        this.path = new Path2D();
+        this.path.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, true);
+        if(!dead) { context.fillStyle = this.color; }
+        else{ context.fillStyle = "#AB2A3EA0"; }
+        context.fill(this.path);
+    }
+
+    collision(context, gameObject){
+        if(aabbCollision(this, gameObject, true, true)){
+            return true;
+        }
+        return false;
+		/*
+        if(context.isPointInPath(this.path, gameObject.x, gameObject.y, "nonzero")){
+            return true;
+        }
+        if(isArea){
+            if(context.isPointInPath(this.path, gameObject.x + gameObject.radius*2, gameObject.y + gameObject.radius*2, "nonzero")){
+                return true;
+            }
+        }
+        else{
+            if(context.isPointInPath(this.path, gameObject.x + gameObject.radius, gameObject.y + gameObject.radius, "nonzero")){
+                return true;
+            }
+        }
+		return false;
+		*/
+    }
+}
+
+class Arco{
+    constructor(x, y, radius, startAngle, rotationSpeed, color){
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.rotationSpeed = rotationSpeed;
+        this.startAngle = startAngle;
+        this.endAngle = this.startAngle + 1/3;
+        this.path = new Path2D();
+        this.initPath();
+    }
+
+    update(deltaTime) {
+		this.startAngle += (this.rotationSpeed * deltaTime / 1000) % 2;
+		this.endAngle += (this.rotationSpeed * deltaTime / 1000) % 2;
+		
+		//if(this.startAngle * Math.PI > Math.PI || this.startAngle * Math.PI < - Math.PI/2) this.rotationSpeed *= -1;
+
+        this.initPath();
+    }
+
+    initPath() {
+        this.path = new Path2D();        
+        this.path.arc(this.x, this.y, this.radius, this.startAngle * Math.PI, this.endAngle * Math.PI, false);
+        this.path.lineTo(this.x, this.y);
+        this.path.closePath();
+    }
+
+    render(context) {
+        if(!game.player.hidden && context.isPointInPath(this.path, game.player.x, game.player.y, "nonzero")) {
+            context.fillStyle = "#FF0000A0";
+            game.player.lowerStealth();
+        }
+        else { context.fillStyle = this.color; }
+        
+        context.fill(this.path);
+    }
+
+    move(deltaTime, speed){
+        this.x += deltaTime / 1000 * speed;
+    }
+}
+
+class Enemy{
+    constructor(ball, arc, speed, type){
+        this.ball = ball;
+        this.arc = arc;
+        this.speed = speed;
+        this.type = type;
+        this.dead = false;
+    }
+
+    update(deltaTime) {
+        if(!this.dead) {
+            switch(this.type){
+                case enemyType.Fixed:                   //There is no update
+                    break;
+                case enemyType.Rotating:
+                    this.arc.update(deltaTime);         //Only the arc moves around the ball
+                    break;
+                case enemyType.Moving:
+                    this.arc.update(deltaTime);         //Everything updates
+                    this.arc.move(deltaTime, this.speed);
+                    this.ball.move(deltaTime, this.speed);
+                    break;
+            }
+        
+            for (var i = 0; i < game.objects.boxes.length; i++) 
+            {
+                this.collision(game.objects.boxes[i], deltaTime);
+            }
+        }
+    }
+    
+    render(context){
+        if(!this.dead){
+            this.arc.render(context);
+        }
+        this.ball.render(context, this.dead);
+    }
+
+    collision(gameObject, deltaTime){
+        if(aabbCollision(this.ball, gameObject, true, false)){
+            this.arc.x -= deltaTime / 1000 * this.speed;
+            this.ball.x -= deltaTime / 1000 * this.speed;
+            this.speed = -this.speed;
+            if(this.arc.rotationSpeed == 0) {
+                this.arc.startAngle += 1;
+                this.arc.endAngle += 1;
+            }
+        }
+    }
+}
+
+class HealthBar {
+    constructor(x, y, width, height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+
+    render(context) {
+        context.fillStyle = "#F60050";
+        this.path = new Path2D();
+        this.path.rect(this.x, this.y, this.width * game.player.stealth / 100, this.height);
+        this.path.closePath();
+        context.fill(this.path);
+    }
+}
+
+class EndGame {
+    constructor(backgroundColor, textColor, text){
+        this.backgroundColor = backgroundColor;
+        this.textColor = textColor;
+        this.text = text;
+    }
+
+    render(context){
+        //Background
+        context.fillStyle = this.backgroundColor;
+        context.fillRect(0, 0, game.canvas.width, game.canvas.height);
+
+        //Text
+        context.fillStyle = this.textColor;
+        context.font = "200px Impact";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText(this.text, game.canvas.width/2, game.canvas.height/2 - 150);
+
+        context.fillStyle = "white";
+        context.font = "20px Impact";
+        context.textAlign = "center";
+        context.textBaseline = "middle";
+        context.fillText("Press space to play again", game.canvas.width/2, game.canvas.height/2 + 150);
+
+        if(keyPressed[controls.reset]) location.reload();
+    }
+}
+
+//#endregion
+
