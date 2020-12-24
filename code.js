@@ -484,3 +484,138 @@ function aabbCollision(object1, object2, _1isBall, _2isBall) {
     }
     return false;
 }
+
+
+function LoadLevel(){
+    var creator = new MapCreator();
+    var level1 = creator.level1;
+    //Create canvas and get the context
+	game.canvas = createFullScreenCanvas();
+    game.context = game.canvas.getContext("2d");
+    
+    //                                  Grid
+    // ----------------------------------------------------------------------------- //
+    var gridData = level1.grid;
+    game.grid = new Rectangle(gridData.x, gridData.y, gridData.w, gridData.h, gridData.color, gridData.fill);
+    
+
+    //                                  Player
+    // ----------------------------------------------------------------------------- //
+    var playerData = level1.player;
+    game.player = new Player(playerData.x, playerData.y, playerData.radius, playerData.color, playerData.speed);
+
+
+    //                                  Boxes
+    // ----------------------------------------------------------------------------- //
+    for(var i = 0; i<8; i++){
+        var boxData = level1.boxes[i];
+        var width   = boxData.w == -1 ? level1.config.boxes.size : boxData.w;
+        var height  = boxData.h == -1 ? level1.config.boxes.size : boxData.h;
+        game.objects.boxes[i] = new Rectangle(boxData.x, boxData.y, width, height, level1.config.boxes.color, level1.config.boxes.fill);
+    }
+
+
+    //                                  Enemies
+    // ----------------------------------------------------------------------------- //
+    for(var i = 0; i<9; i++){
+        var ballsData = level1.enemies.balls[i];
+        var arcsData  = level1.enemies.arcs[i];
+        var ball = new Bola(ballsData.x, ballsData.y, level1.config.balls.radius, level1.config.balls.color);
+        var arc = new Arco(arcsData.x, arcsData.y, arcsData.r, arcsData.angle, arcsData.speed, level1.config.arcs.color);
+        game.objects.enemies[i] = new Enemy(ball, arc, creator.level1.enemies.speeds[i], creator.level1.enemies.types[i]);
+    }
+
+    
+    //                                  Others
+    // ----------------------------------------------------------------------------- //
+
+    //Key
+    var keyData = level1.key;
+    game.objects.key = new Rectangle(keyData.x, keyData.y, keyData.size, keyData.size, keyData.color, keyData.fill);
+
+    //Stealth bar
+    var stealthData = level1.stealth;
+    game.stealth = new HealthBar(stealthData.x, stealthData.y, stealthData.w, stealthData.h);
+
+    //Finish line
+    var finishData = level1.finish;
+    game.objects.finish = new Rectangle(finishData.x, finishData.y, finishData.w, finishData.h, finishData.color, level1.config.boxes.fill);
+    
+    //End screens
+    game.grid.winScreen = new EndGame(level1.config.screens.background, level1.config.screens.color, level1.endScreens.win.text);
+    game.grid.loseScreen = new EndGame(level1.config.screens.background, level1.config.screens.color, level1.endScreens.lose.text);
+
+
+    //#region Trash
+    // //Pared abajo
+    // for(var i = 0; i<numBoxesPerRow; i++){
+    //     var x = (i % numBoxesPerRow) * tam + margin;
+    //     var y = game.grid.height + tam/2;
+    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
+    // }
+
+    // //Pared arriba
+    // for(var i = 0; i<numBoxesPerRow; i++){
+    //     var x = (i % numBoxesPerRow) * tam + margin;
+    //     var y = parseInt(i / numBoxesPerRow) * tam + margin;
+    //     game.objects.boxes[i+numBoxesPerRow] = new Rectangle(x, y, tam, tam, boxColor, true);
+    // }
+    
+    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn;
+
+    // //Pared izquierda
+    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
+    //     var x = margin;
+    //     var y = (i % numBoxesPerColumn) * tam + margin;
+    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
+    // }
+
+    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn;
+
+    // //Pared derecha
+    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
+    //     var x = game.grid.width + tam/2;
+    //     var y = (i % numBoxesPerColumn) * tam + margin;
+    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
+    // }
+
+    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn -10;
+
+    // //Pared medio alta 1
+    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
+    //     var x = 250;
+    //     var y = (i % numBoxesPerColumn) * tam - tam/2;
+    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
+    // }
+
+
+    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn - 10;
+
+    // //Pared medio baja 1
+    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
+    //     var x = 500;
+    //     var y = (i % numBoxesPerColumn + numBoxesPerColumn/2) * tam + tam*2;
+    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
+    // }
+    
+    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn - 16;
+
+    // //Pared medio h 1
+    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
+    //     var x = (i % numBoxesPerColumn + numBoxesPerColumn/2) * tam - tam*2;
+    //     var y = 500;
+    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
+    // }
+
+    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn - 20;
+    
+    // //Pared medio alta 2
+    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
+    //     var x = (i % numBoxesPerColumn + numBoxesPerColumn/2) * tam - tam*4;
+    //     var y = 200;
+    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
+    // }
+
+    //#endregion
+
+}
