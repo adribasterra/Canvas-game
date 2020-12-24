@@ -444,3 +444,43 @@ class EndGame {
 
 //#endregion
 
+
+function CheckPlayerCollisionWithWalls(){
+    for (var i = 0; i < game.objects.boxes.length; i++) {
+        if(aabbCollision(game.player, game.objects.boxes[i], true, false)){
+            return i;
+        }
+	}
+	return -1;
+}
+
+function aabbCollision(object1, object2, _1isBall, _2isBall) {
+    if(_1isBall){
+        var size1 = object1.radius * 2;
+        if(_2isBall){
+            var size2 = object2.radius * 2;
+            if (object1.x < object2.x + size2 && size1 + object1.x > object2.x &&
+                object1.y < object2.y + size2 && size1 + object1.y > object2.y)
+            {
+                return true;
+            }
+        }
+        else{
+            if (object1.x < object2.x + object2.width && size1 + object1.x > object2.x &&
+                object1.y < object2.y + object2.height && size1 + object1.y > object2.y)
+            {
+                return true;
+            }
+        }
+    }
+    else{
+        if(!_2isBall){
+            if (object1.x < object2.x + object2.width && object1.width + object1.x > object2.x &&
+                object1.y < object2.y + object2.height && object1.height + object1.y > object2.y)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
