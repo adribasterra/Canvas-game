@@ -501,7 +501,7 @@ class Turret extends Ball{
     }
 
     shoot(){
-        this.missiles[this.numMissiles++] = new Missile(this.x, this.y, 10, "#D0D0D0", 100);
+        this.missiles[this.numMissiles++] = new Missile(this.x, this.y, 10, "#000000", 100);
     }
 }
 
@@ -596,10 +596,11 @@ function LoadLevel(){
         var height  = boxData.h == -1 ? level1.config.boxes.size : boxData.h;
         game.objects.boxes[i] = new Box(boxData.x, boxData.y, width, height, level1.config.boxes.color, level1.config.boxes.fill);
     }
+    
 
     //                                  Enemies
     // ----------------------------------------------------------------------------- //
-    for(var i = 0; i<9; i++){
+    for(var i = 0; i<level1.enemies.balls.length; i++){
         var ballsData = level1.enemies.balls[i];
         var arcsData  = level1.enemies.arcs[i];
         var ball = new Ball(ballsData.x, ballsData.y, level1.config.balls.radius, level1.config.balls.color);

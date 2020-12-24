@@ -45,14 +45,14 @@ class MapCreator {
             },
             //Boxes
             boxes : [
-                { x: 30,     y: 30,    w: 1020,   h:  -1 },     //Upper wall
-                { x: 30,     y: 670,   w: 1020,   h:  -1 },     //Lower wall
-                { x: 30,     y: 30,    w:   -1,   h: 660 },     //Left  wall
-                { x: 1030,   y: 30,    w:   -1,   h: 660 },     //Rigth wall
-                { x: 250,    y: 30,    w:   -1,   h: 500 },     //Vertical wall
-                { x: 500,    y: 350,   w:   -1,   h: 340 },     //Vertical wall 2
-                { x: 250,    y: 200,   w:  270,   h:  -1 },     //Horizontal wall 1
-                { x: 600,    y: 500,   w:  330,   h:  -1 }
+                { x: 30,     y: 30,    w: 1020,   h:  -1 },     //Upper
+                { x: 30,     y: 670,   w: 1020,   h:  -1 },     //Lower
+                { x: 30,     y: 30,    w:   -1,   h: 660 },     //Left 
+                { x: 1030,   y: 30,    w:   -1,   h: 660 },     //Right
+                { x: 250,    y: 30,    w:   -1,   h: 500 },     //Vertical
+                { x: 500,    y: 350,   w:   -1,   h: 340 },     //Vertical 2
+                { x: 250,    y: 200,   w:  270,   h:  -1 },     //Horizontal 1
+                { x: 500,    y: 500,   w:  330,   h:  -1 }      //Horizontal 2
             ],
             //Turrets       x, y, radius, color, speed, shootRate, maxTimeAlive
             turrets : [
@@ -67,7 +67,7 @@ class MapCreator {
                     { x: 760, y: 270 },
                     { x: 760, y: 270 },
                     { x: 170, y: 600 },
-                    { x: 330, y: 125 },
+                    { x: 300, y: 160 },
                     { x: 600, y: 400 },
                     { x: 600, y: 600 }
                 ],
@@ -78,7 +78,7 @@ class MapCreator {
                     { x: 760, y: 270, r: 210, angle:   0, speed: 2 },
                     { x: 760, y: 270, r: 210, angle:   1, speed: 2 },
                     { x: 170, y: 600, r: 210, angle:1.85, speed: 0 },
-                    { x: 330, y: 125, r: 120, angle:   0, speed: 1 },
+                    { x: 300, y: 160, r: 120, angle:   0, speed: 1 },
                     { x: 600, y: 400, r: 120, angle:   0, speed: 1 },
                     { x: 600, y: 600, r: 120, angle:   0, speed: 2 }
                 ],
@@ -119,7 +119,7 @@ class MapCreator {
                 h : 20
             },
             finish : {
-                x : 900,
+                x : 550,
                 y : 630,
                 w : 120,
                 h : 30,
