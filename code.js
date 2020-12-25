@@ -11,7 +11,8 @@ var controls = {
     playerDOWN : "ArrowDown",
     playerHIDE : "h",
     playerKILL : "k",
-    reset : " "
+    reset : " ",
+    playerMINE : "m"
 }
 
 var enemyType = {
@@ -82,6 +83,7 @@ function Update(deltaTime){
     //console.log("This is the update after " + delta + " ms.");
     game.player.update(deltaTime);
 
+    //Update enemies & check player killing
     for(var i = 0; i<game.objects.enemies.length; i++){
         game.objects.enemies[i].update(deltaTime);
         if(aabbCollision(game.objects.enemies[i].ball, game.player, true, true, true) && keyPressed[controls.playerKILL]) {
@@ -89,6 +91,7 @@ function Update(deltaTime){
         }
     }
 
+    //Update turrets & check collision of missiles
     for(var i = 0; i<game.objects.turrets.length; i++) {
         if(aabbCollision(game.objects.turrets[i], game.player, true, true, true) && keyPressed[controls.playerKILL]){
             game.objects.turrets[i].dead = true;
@@ -143,6 +146,7 @@ function Render(){
         game.stealth.render(game.context);
     }
 }
+
 //#endregion
 
 
@@ -180,47 +184,71 @@ class Player{
         this.color = color;
         this.speed = speed;
         this.hidden = false;
-        this.once = true;
+        this.once = { h: true, m: true};
         this.hasKey = false;
         this.stealth = 100;
         this.dead = false;
         this.finish = false;
         this.area = undefined;
+        this.collision = { up: false, down: false, left: false, right: false };
+        this.mines = [];
+        this.numMines = 0;
     }
 
     update(deltaTime) {
         //Movement with keys
         if(!this.hidden){
+            //Works bad
             var num;
             if (keyPressed[controls.playerUP]) {        // Player holding up
-                this.y -= this.speed * deltaTime/1000;
                 num = CheckPlayerCollisionWithWalls();
-                if(num != -1) this.y = game.objects.boxes[num].y + this.radius *2;
+                if(num != -1) this.y = game.objects.boxes[num].y + game.objects.boxes[num].height + this.radius;
+                else this.y -= this.speed * deltaTime/1000;
             }
             if (keyPressed[controls.playerDOWN]) {      // Player holding down
-                this.y += this.speed * deltaTime/1000;
                 num = CheckPlayerCollisionWithWalls();
-                if(num != -1) this.y = game.objects.boxes[num].y - this.radius *2;
+                if(num != -1) this.y = game.objects.boxes[num].y - game.objects.boxes[num].height;
+                else this.y += this.speed * deltaTime/1000;
             } 
             if (keyPressed[controls.playerLEFT]) {      // Player holding left
-                this.x -= this.speed * deltaTime/1000;
                 num = CheckPlayerCollisionWithWalls();
-                if(num != -1) this.x = game.objects.boxes[num].x - this.radius *2;
+                if(num != -1) this.x = game.objects.boxes[num].x + game.objects.boxes[num].width;
+                else this.x -= this.speed * deltaTime/1000;
             }
             if (keyPressed[controls.playerRIGHT]) {     // Player holding right
-                this.x += this.speed * deltaTime/1000;
                 num = CheckPlayerCollisionWithWalls();
-                if(num != -1) this.x = game.objects.boxes[num].x - this.radius;
+                if(num != -1) this.x -= game.objects.boxes[num].x - game.objects.boxes[num].width;
+                else this.x += this.speed * deltaTime/1000;
             }
-        }
 
-        if (keyPressed[controls.playerHIDE] && this.once) {
+        }
+        //Hide player
+        if (keyPressed[controls.playerHIDE] && this.once.h) {
             this.hidden = !this.hidden;
-            this.once = false;
+            this.once.h = false;
+        }
+        if(!keyPressed[controls.playerHIDE]){
+            this.once.h = true;
         }
 
-        if(!keyPressed[controls.playerHIDE]){
-            this.once = true;
+        //Place mine
+        if (keyPressed[controls.playerMINE] && this.once.m && this.numMines < 4) {
+            this.once.m = false;
+            this.mines[this.numMines++] = new Box(this.x, this.y, 10, 10, "#FF0000", true);
+            console.log("mine");
+        }
+        if(!keyPressed[controls.playerMINE]){
+            this.once.m = true;
+        }
+        for(var i = 0; i<this.mines.length; i++){
+            for(var j = 0; j<game.objects.enemies.length; j++){
+                if(this.mines[i] != null){
+                    debugger;
+                    if(game.objects.enemies[j].collision(this.mines[i], -1)){
+                        this.mines[i] = null;
+                    }
+                }
+            }
         }
 
         //Check key
@@ -247,6 +275,12 @@ class Player{
     render(context) {
         this.path = new Path2D();
         this.area = new Path2D();
+        
+        //Render mines
+        for(var i = 0; i<this.mines.length; i++){
+            if(this.mines[i] != null) this.mines[i].render(context);
+        }
+
         if(this.hidden) {
             this.path.rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
             context.fillStyle = "#00FFFF";
@@ -411,14 +445,21 @@ class Enemy{
 
     collision(gameObject, deltaTime){
         if(aabbCollision(this.ball, gameObject, true, false, false)){
-            this.arc.x -= deltaTime / 1000 * this.speed;
-            this.ball.x -= deltaTime / 1000 * this.speed;
-            this.speed = -this.speed;
-            if(this.arc.rotationSpeed == 0) {
-                this.arc.startAngle += 1;
-                this.arc.endAngle += 1;
+            if(deltaTime != -1){
+                this.arc.x -= deltaTime / 1000 * this.speed;
+                this.ball.x -= deltaTime / 1000 * this.speed;
+                this.speed = -this.speed;
+                if(this.arc.rotationSpeed == 0) {
+                    this.arc.startAngle += 1;
+                    this.arc.endAngle += 1;
+                }
             }
+            else{
+                this.dead = true;
+            }
+            return true;
         }
+        return false;
     }
 }
 
@@ -527,6 +568,37 @@ class Missile extends Ball{
 
 //#endregion
 
+function CircleRect(circle) {
+    for(var i = 0; i<game.objects.boxes.length; i++){
+        var rx = game.objects.boxes[i].x;
+        var ry = game.objects.boxes[i].y;
+        var rw = game.objects.boxes[i].width;
+        var rh = game.objects.boxes[i].height;
+        var cx = circle.x;
+        var cy = circle.y;
+        var radius = circle.radius;
+        // temporary variables to set edges for testing
+        var testX = circle.x;
+        var testY = circle.y;
+    
+        // which edge is closest?
+        if (cx < rx)         testX = rx;      // test left edge
+        else if (cx > rx+rw) testX = rx+rw;   // right edge
+        if (cy < ry)         testY = ry;      // top edge
+        else if (cy > ry+rh) testY = ry+rh;   // bottom edge
+    
+        // get distance from closest edges
+        var distX = cx-testX;
+        var distY = cy-testY;
+        var distance = Math.sqrt( (distX*distX) + (distY*distY) );
+    
+        // if the distance is less than the radius, collision!
+        if (distance <= radius) {
+            return true;
+        }
+    }
+    return false;
+}
 
 function CheckPlayerCollisionWithWalls(){
     for (var i = 0; i < game.objects.boxes.length; i++) {
