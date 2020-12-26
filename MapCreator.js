@@ -54,9 +54,9 @@ class MapCreator {
                 { x: 250,    y: 200,   w:  270,   h:  -1 },     //Horizontal 1
                 { x: 500,    y: 500,   w:  330,   h:  -1 }      //Horizontal 2
             ],
-            //Turrets       x, y, radius, color, speed, shootRate, maxTimeAlive
+            //Turrets
             turrets : [
-                { x:  980, y: 100, r: 30, color: "", speed: 0, shootRate: 2, maxTimeAlive: 5 }
+                { x:  980, y: 100, r: 30, color: "", speed: 0, shootRate: 2, maxTimeAlive: 9 , missileSpeed: 300 }
             ],
             //Enemies
             enemies : {
@@ -139,74 +139,4 @@ class MapCreator {
             //Soon
         }
     }
-    
-    //#region Method way
-
-    // level1(){
-    //     var boxesPerRow = 96;
-    //     var boxesPerColumn = 54;
-    //     const player = {
-    //         x : 100,
-    //         y : 100,
-    //         radius : 10,
-    //         color : "#FF0000",
-    //         speed : 200
-    //     };
-    //     const config = {
-    //         boxes : {
-    //             color : "#69056f",
-    //             fill : true,
-    //             size : 20
-    //         },
-    //         balls : {
-    //             color : "#6262d6"
-    //         },
-    //         arc : {
-    //             color : "#c1e1ffa0"
-    //         }
-    //     };
-    //     //Boxes
-    //     const boxes = [
-    //         {x: 0, y: 0},
-
-    //     ];
-        
-    //     //Enemies
-    //     const enemies = {
-    //         balls : [
-    //             {x:  60, y: 200, r: 10, color: config.balls.color},
-    //             {x: 240, y: 400, r: 10, color: config.balls.color},
-    //             {x: 385, y: 240, r: 10, color: config.balls.color},
-    //             {x: 760, y: 270, r: 10, color: config.balls.color},
-    //             {x: 760, y: 270, r: 10, color: config.balls.color},
-    //             {x: 170, y: 600, r: 10, color: config.balls.color},
-    //             {x: 330, y: 125, r: 10, color: config.balls.color},
-    //             {x: 600, y: 400, r: 10, color: config.balls.color},
-    //             {x: 600, y: 600, r: 10, color: config.balls.color}
-    //         ],
-    //         arcs : [
-    //             {x:  60, y: 200, start: 120, angle:   0, speed: 0, color: config.arc.color},
-    //             {x: 240, y: 400, start: 150, angle: 2/3, speed: 0, color: config.arc.color},
-    //             {x: 385, y: 240, start: 150, angle: 1/3, speed: 0, color: config.arc.color},
-    //             {x: 760, y: 270, start: 210, angle:   0, speed: 2, color: config.arc.color},
-    //             {x: 760, y: 270, start: 210, angle:   1, speed: 2, color: config.arc.color},
-    //             {x: 170, y: 600, start: 210, angle:1.85, speed: 0, color: config.arc.color},
-    //             {x: 330, y: 125, start: 120, angle:   0, speed: 1, color: config.arc.color},
-    //             {x: 600, y: 400, start: 120, angle:   0, speed: 1, color: config.arc.color},
-    //             {x: 600, y: 600, start: 120, angle:   0, speed: 2, color: config.arc.color}
-    //         ],
-    //         types : [
-    //             enemyType.Fixed,
-    //             enemyType.Fixed,
-    //             enemyType.Fixed,
-    //             enemyType.Rotating,
-    //             enemyType.Rotating,
-    //             enemyType.Moving,
-    //             enemyType.Moving,
-    //             enemyType.Moving,
-    //             enemyType.Moving      
-    //         ]
-    //     }
-    // }
-    //#endregion
 }

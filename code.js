@@ -1,7 +1,6 @@
 
 //#region Attributes
 
-// Handle keyboard controls
 var keyPressed = {};
 
 var controls = {
@@ -53,6 +52,7 @@ function Init(){
 }
 
 function HandleInputEvents(){
+
     window.addEventListener("keydown", function (event) { keyPressed[event.key] = true; });
     window.addEventListener("keyup", function (event) { keyPressed[event.key] = false; });
     window.onclick = (mouse) =>{
@@ -231,19 +231,20 @@ class Player{
             this.once.h = true;
         }
 
-        //Place mine
+        //Instantiate mine
         if (keyPressed[controls.playerMINE] && this.once.m && this.numMines < 4) {
             this.once.m = false;
-            this.mines[this.numMines++] = new Box(this.x, this.y, 10, 10, "#FF0000", true);
-            console.log("mine");
+            this.mines[this.numMines++] = new Mine(this.x, this.y, 10, "#FF0000", 1);
+            console.log("Mine");
         }
         if(!keyPressed[controls.playerMINE]){
             this.once.m = true;
         }
+        //Mine collision with enemies
         for(var i = 0; i<this.mines.length; i++){
             for(var j = 0; j<game.objects.enemies.length; j++){
                 if(this.mines[i] != null){
-                    debugger;
+                    this.mines[i].ownUpdate(deltaTime);
                     if(game.objects.enemies[j].collision(this.mines[i], -1)){
                         this.mines[i] = null;
                     }
@@ -278,7 +279,7 @@ class Player{
         
         //Render mines
         for(var i = 0; i<this.mines.length; i++){
-            if(this.mines[i] != null) this.mines[i].render(context);
+            if(this.mines[i] != null) this.mines[i].ownRender(context);
         }
 
         if(this.hidden) {
@@ -444,8 +445,8 @@ class Enemy{
     }
 
     collision(gameObject, deltaTime){
-        if(aabbCollision(this.ball, gameObject, true, false, false)){
-            if(deltaTime != -1){
+        if(deltaTime != -1){
+            if(aabbCollision(this.ball, gameObject, true, false, false)){
                 this.arc.x -= deltaTime / 1000 * this.speed;
                 this.ball.x -= deltaTime / 1000 * this.speed;
                 this.speed = -this.speed;
@@ -453,11 +454,14 @@ class Enemy{
                     this.arc.startAngle += 1;
                     this.arc.endAngle += 1;
                 }
+                return true;
             }
-            else{
+        }
+        else{
+            if(aabbCollision(this.ball, gameObject, true, true, false)){
                 this.dead = true;
+                return true;
             }
-            return true;
         }
         return false;
     }
@@ -510,7 +514,7 @@ class EndGame {
 }
 
 class Turret extends Ball{
-    constructor(x, y, radius, color, speed, shootRate, maxTimeAlive){
+    constructor(x, y, radius, color, speed, shootRate, maxTimeAlive, missileSpeed){
         super(x, y, radius, color, speed);
         this.shootRate = shootRate;
         this.missiles = [];
@@ -518,6 +522,7 @@ class Turret extends Ball{
         this.lastTimeShot = 0;
         this.maxTimeAlive = maxTimeAlive;
         this.dead = false;
+        this.missileSpeed = missileSpeed;
     }
 
     update(deltaTime){
@@ -542,7 +547,7 @@ class Turret extends Ball{
     }
 
     shoot(){
-        this.missiles[this.numMissiles++] = new Missile(this.x, this.y, 10, "#000000", 100);
+        this.missiles[this.numMissiles++] = new Missile(this.x, this.y, 10, "#000000", this.missileSpeed);
     }
 }
 
@@ -555,16 +560,71 @@ class Missile extends Ball{
 
     update(deltaTime){
         this.timeAlive += deltaTime/1000;
-        this.x += Math.sign(this.player.x - this.x) * this.speed * deltaTime/1000;
-        this.y += Math.sign(this.player.y - this.y) * this.speed * deltaTime/1000;
+        //Chase player
+        var distance = Vec2.substract(this.player, this);
+        distance = distance.normalized();
+        distance = distance.add(this);
+        this.x = distance.x;
+        this.y = distance.y;
+        //Check collision with boxes
         for(var i = 0; i<game.objects.boxes.length; i++){
             if(aabbCollision(this, game.objects.boxes[i], true, false, false)){
                 this.timeAlive = 1000000;
             }
         }
     }
-
 }
+
+class Mine extends Ball{
+    constructor(x, y, externRadius, color, speed){
+        super(x, y, externRadius, color, 0);
+        this.innerRadius = 0;
+        this.speed = speed;
+    }
+
+    ownUpdate(deltaTime){
+        if(this.innerRadius > this.radius -2) this.innerRadius = 0;
+        else this.innerRadius += this.speed * deltaTime / 1000;
+    }
+
+    ownRender(context){
+        this.externPath = new Path2D();
+        this.externPath.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, true);
+        context.fillStyle = this.color;
+        context.stroke(this.externPath);
+
+        this.innerPath = new Path2D();
+        this.innerPath.arc(this.x, this.y, this.innerRadius, 0, 2 * Math.PI, true);
+        context.fillStyle = this.color;
+        context.fill(this.innerPath);
+    }
+}
+
+class Vec2 {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    static substract(one, two) {
+        const V = new Vec2(one.x - two.x, one.y - two.y);
+        return V;
+    }
+
+    normalized() {
+        var m = Math.sqrt(this.x * this.x + this.y * this.y);
+        if (m >= 0) {
+            return new Vec2(this.x / m, this.y / m);
+        }
+        return this;
+    }
+
+    add(other) {
+        const V = new Vec2(this.x + other.x, this.y + other.y);
+        return V;
+    }
+}
+
 
 //#endregion
 
@@ -685,7 +745,8 @@ function LoadLevel(){
     // ----------------------------------------------------------------------------- //
     for(var i = 0; i<level1.turrets.length; i++){
         var turretData = level1.turrets[i];
-        game.objects.turrets[i] = new Turret(turretData.x, turretData.y, turretData.r, turretData.color, turretData.speed, turretData.shootRate, turretData.maxTimeAlive);
+        game.objects.turrets[i] = new Turret(turretData.x, turretData.y, turretData.r, turretData.color, turretData.speed,
+                                             turretData.shootRate, turretData.maxTimeAlive, turretData.missileSpeed);
     }
     
     
