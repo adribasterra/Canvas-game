@@ -80,7 +80,12 @@ function Loop() {
 }
 
 function Update(deltaTime){
-    //console.log("This is the update after " + delta + " ms.");
+
+    //Discard if elasped long time
+    if(deltaTime > 1000){
+        return;
+    }
+    
     game.player.update(deltaTime);
 
     //Update enemies & check player killing
@@ -112,10 +117,9 @@ function Update(deltaTime){
 
 function Render(){
     //Clear screen
-    game.context.fillStyle = '#f3d9f3';
+    game.context.fillStyle = '#F3D9F3';
     game.context.fillRect(0, 0, game.canvas.width, game.canvas.height);
 
-    
     if(game.player.dead){           //Game over
         game.grid.loseScreen.render(game.context);
     }
@@ -198,30 +202,105 @@ class Player{
     update(deltaTime) {
         //Movement with keys
         if(!this.hidden){
-            //Works bad
-            var num;
+            //Works not that bad
+            var difference = 3;
             if (keyPressed[controls.playerUP]) {        // Player holding up
-                num = CheckPlayerCollisionWithWalls();
-                if(num != -1) this.y = game.objects.boxes[num].y + game.objects.boxes[num].height + this.radius;
+                if(CircleRect(this)) {
+                    this.y += difference;
+                }
                 else this.y -= this.speed * deltaTime/1000;
             }
             if (keyPressed[controls.playerDOWN]) {      // Player holding down
-                num = CheckPlayerCollisionWithWalls();
-                if(num != -1) this.y = game.objects.boxes[num].y - game.objects.boxes[num].height;
+                if(CircleRect(this)) {
+                    this.y -= difference;
+                }
                 else this.y += this.speed * deltaTime/1000;
             } 
             if (keyPressed[controls.playerLEFT]) {      // Player holding left
-                num = CheckPlayerCollisionWithWalls();
-                if(num != -1) this.x = game.objects.boxes[num].x + game.objects.boxes[num].width;
+                if(CircleRect(this)) {
+                    this.x += difference;
+                }
                 else this.x -= this.speed * deltaTime/1000;
             }
             if (keyPressed[controls.playerRIGHT]) {     // Player holding right
-                num = CheckPlayerCollisionWithWalls();
-                if(num != -1) this.x -= game.objects.boxes[num].x - game.objects.boxes[num].width;
+                if(CircleRect(this)) {
+                    this.x -= difference;
+                }
                 else this.x += this.speed * deltaTime/1000;
             }
 
+            //#region Attempts
+
+            // //Works bad
+            // var num;
+            // if (keyPressed[controls.playerUP]) {            // Player holding up
+            //     num = CheckPlayerCollisionWithWalls();
+            //     if(num != -1) this.y = game.objects.boxes[num].y + game.objects.boxes[num].height + this.radius;
+            //     else this.y -= this.speed * deltaTime/1000;
+            // }
+            // if (keyPressed[controls.playerDOWN]) {          // Player holding down
+            //     num = CheckPlayerCollisionWithWalls();
+            //     if(num != -1) this.y = game.objects.boxes[num].y - game.objects.boxes[num].height;
+            //     else this.y += this.speed * deltaTime/1000;
+            // }
+            // if (keyPressed[controls.playerLEFT]) {          // Player holding left
+            //     num = CheckPlayerCollisionWithWalls();
+            //     if(num != -1) this.x = game.objects.boxes[num].x + game.objects.boxes[num].width;
+            //     else this.x -= this.speed * deltaTime/1000;
+            // }
+            // if (keyPressed[controls.playerRIGHT]) {         // Player holding right
+            //     num = CheckPlayerCollisionWithWalls();
+            //     if(num != -1) this.x -= game.objects.boxes[num].x - game.objects.boxes[num].width;
+            //     else this.x += this.speed * deltaTime/1000;
+            // }
+
+
+            // //De momento no hace nada
+            // if (keyPressed[controls.playerUP] && !this.collision.up) {          // Player holding up
+            //     this.y -= this.speed * deltaTime/1000;
+            //     this.collision.down = false;
+            // }
+            // if (keyPressed[controls.playerDOWN] && !this.collision.down) {      // Player holding down
+            //     this.y += this.speed * deltaTime/1000;
+            //     this.collision.up = false;
+            // } 
+            // if (keyPressed[controls.playerLEFT] && !this.collision.left) {      // Player holding left
+            //     this.x -= this.speed * deltaTime/1000;
+            //     this.collision.right = false;
+            // }
+            // if (keyPressed[controls.playerRIGHT] && !this.collision.right) {     // Player holding right
+            //     this.x += this.speed * deltaTime/1000;
+            //     this.collision.left = false;
+            // }
+
+            // //Works todavía peor
+            // if(!this.hidden){
+            //     var num;
+            //     if (keyPressed[controls.playerUP]) {        // Player holding up
+            //         this.y -= this.speed * deltaTime/1000;
+            //         num = CheckPlayerCollisionWithWalls();
+            //         if(num != -1) this.y = game.objects.boxes[num].y + this.radius *2;
+            //     }
+            //     if (keyPressed[controls.playerDOWN]) {      // Player holding down
+            //         this.y += this.speed * deltaTime/1000;
+            //         num = CheckPlayerCollisionWithWalls();
+            //         if(num != -1) this.y = game.objects.boxes[num].y - this.radius *2;
+            //     } 
+            //     if (keyPressed[controls.playerLEFT]) {      // Player holding left
+            //         this.x -= this.speed * deltaTime/1000;
+            //         num = CheckPlayerCollisionWithWalls();
+            //         if(num != -1) this.x = game.objects.boxes[num].x - this.radius *2;
+            //     }
+            //     if (keyPressed[controls.playerRIGHT]) {     // Player holding right
+            //         this.x += this.speed * deltaTime/1000;
+            //         num = CheckPlayerCollisionWithWalls();
+            //         if(num != -1) this.x = game.objects.boxes[num].x - this.radius;
+            //     }
+            // }
+            //#endregion
+            
         }
+
         //Hide player
         if (keyPressed[controls.playerHIDE] && this.once.h) {
             this.hidden = !this.hidden;
@@ -526,6 +605,7 @@ class Turret extends Ball{
     }
 
     update(deltaTime){
+        //Shoot
         if(!this.dead){
             this.lastTimeShot += deltaTime/1000;
             if(this.lastTimeShot > this.shootRate){
@@ -533,6 +613,7 @@ class Turret extends Ball{
                 this.shoot();
             }
         }
+        //Check missiles time alive
         for(var i = 0; i<this.missiles.length; i++){
             if(this.missiles[i] != null){
                 if(this.missiles[i] != null && this.missiles[i].timeAlive > this.maxTimeAlive){
@@ -560,12 +641,16 @@ class Missile extends Ball{
 
     update(deltaTime){
         this.timeAlive += deltaTime/1000;
+
         //Chase player
-        var distance = Vec2.substract(this.player, this);
+        var playerPos = new Vec2(this.player.x, this.player.y);
+        var distance = playerPos.substract(this);
         distance = distance.normalized();
+        distance = new Vec2(distance.x * this.speed, distance.y * this.speed);
         distance = distance.add(this);
         this.x = distance.x;
         this.y = distance.y;
+
         //Check collision with boxes
         for(var i = 0; i<game.objects.boxes.length; i++){
             if(aabbCollision(this, game.objects.boxes[i], true, false, false)){
@@ -606,27 +691,26 @@ class Vec2 {
         this.y = y;
     }
 
-    static substract(one, two) {
-        const V = new Vec2(one.x - two.x, one.y - two.y);
-        return V;
+    substract(v) {
+        return new Vec2(this.x - v.x, this.y - v.y);
     }
 
     normalized() {
-        var m = Math.sqrt(this.x * this.x + this.y * this.y);
-        if (m >= 0) {
-            return new Vec2(this.x / m, this.y / m);
+        var module = Math.sqrt(this.x * this.x + this.y * this.y);
+        if (module >= 0) {
+            return new Vec2(this.x / module, this.y / module);
         }
         return this;
     }
 
     add(other) {
-        const V = new Vec2(this.x + other.x, this.y + other.y);
-        return V;
+        return new Vec2(this.x + other.x, this.y + other.y);
     }
 }
 
-
 //#endregion
+
+//#region Collision methods
 
 function CircleRect(circle) {
     for(var i = 0; i<game.objects.boxes.length; i++){
@@ -700,6 +784,8 @@ function aabbCollision(object1, object2, _1isBall, _2isBall, area) {
     return false;
 }
 
+//#endregion
+
 
 function LoadLevel(){
     var creator = new MapCreator();
@@ -711,13 +797,14 @@ function LoadLevel(){
     //                                  Grid
     // ----------------------------------------------------------------------------- //
     var gridData = level1.grid;
-    game.grid = new Box(gridData.x, gridData.y, gridData.w, gridData.h, gridData.color, gridData.fill);
+    var center = { left: gameWidth/2 - gridData.w/2 - 30, top: gameHeight/2 - gridData.h/2 - 30 };
+    game.grid = new Box(gridData.x + center.left, gridData.y + center.top, gridData.w, gridData.h, gridData.color, gridData.fill);
     
 
     //                                  Player
     // ----------------------------------------------------------------------------- //
     var playerData = level1.player;
-    game.player = new Player(playerData.x, playerData.y, playerData.radius, playerData.color, playerData.speed);
+    game.player = new Player(playerData.x + center.left, playerData.y + center.top, playerData.radius, playerData.color, playerData.speed);
 
 
     //                                  Boxes
@@ -726,7 +813,7 @@ function LoadLevel(){
         var boxData = level1.boxes[i];
         var width   = boxData.w == -1 ? level1.config.boxes.size : boxData.w;
         var height  = boxData.h == -1 ? level1.config.boxes.size : boxData.h;
-        game.objects.boxes[i] = new Box(boxData.x, boxData.y, width, height, level1.config.boxes.color, level1.config.boxes.fill);
+        game.objects.boxes[i] = new Box(boxData.x + center.left, boxData.y + center.top, width, height, level1.config.boxes.color, level1.config.boxes.fill);
     }
     
 
@@ -735,8 +822,8 @@ function LoadLevel(){
     for(var i = 0; i<level1.enemies.balls.length; i++){
         var ballsData = level1.enemies.balls[i];
         var arcsData  = level1.enemies.arcs[i];
-        var ball = new Ball(ballsData.x, ballsData.y, level1.config.balls.radius, level1.config.balls.color);
-        var arc = new Arco(arcsData.x, arcsData.y, arcsData.r, arcsData.angle, arcsData.speed, level1.config.arcs.color);
+        var ball = new Ball(ballsData.x + center.left, ballsData.y + center.top, level1.config.balls.radius, level1.config.balls.color);
+        var arc = new Arco(arcsData.x + center.left, arcsData.y + center.top, arcsData.r, arcsData.angle, arcsData.speed, level1.config.arcs.color);
         game.objects.enemies[i] = new Enemy(ball, arc, creator.level1.enemies.speeds[i], creator.level1.enemies.types[i]);
     }
 
@@ -745,7 +832,7 @@ function LoadLevel(){
     // ----------------------------------------------------------------------------- //
     for(var i = 0; i<level1.turrets.length; i++){
         var turretData = level1.turrets[i];
-        game.objects.turrets[i] = new Turret(turretData.x, turretData.y, turretData.r, turretData.color, turretData.speed,
+        game.objects.turrets[i] = new Turret(turretData.x + center.left, turretData.y + center.top, turretData.r, turretData.color, turretData.speed,
                                              turretData.shootRate, turretData.maxTimeAlive, turretData.missileSpeed);
     }
     
@@ -755,15 +842,15 @@ function LoadLevel(){
 
     //Key
     var keyData = level1.key;
-    game.objects.key = new Box(keyData.x, keyData.y, keyData.size, keyData.size, keyData.color, keyData.fill);
+    game.objects.key = new Box(keyData.x + center.left, keyData.y + center.top, keyData.size, keyData.size, keyData.color, keyData.fill);
 
     //Stealth bar
     var stealthData = level1.stealth;
-    game.stealth = new HealthBar(stealthData.x, stealthData.y, stealthData.w, stealthData.h);
+    game.stealth = new HealthBar(stealthData.x + center.left, stealthData.y + center.top, stealthData.w, stealthData.h);
 
     //Finish line
     var finishData = level1.finish;
-    game.objects.finish = new Box(finishData.x, finishData.y, finishData.w, finishData.h, finishData.color, level1.config.boxes.fill);
+    game.objects.finish = new Box(finishData.x + center.left, finishData.y + center.top, finishData.w, finishData.h, finishData.color, level1.config.boxes.fill);
     
     //End screens
     game.grid.winScreen = new EndGame(level1.config.screens.background, level1.config.screens.color, level1.endScreens.win.text);

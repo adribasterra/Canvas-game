@@ -1,6 +1,6 @@
 
 const gameHeight = 720;
-const gameWidth = 1080;
+const gameWidth = 1530;
 
 function createFullScreenCanvas(){
 	//create the element

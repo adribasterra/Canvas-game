@@ -23,7 +23,7 @@ class MapCreator {
                 y : 100,
                 radius : 10,
                 color : "#000000",
-                speed : 200
+                speed : 150
             },
             config : {
                 boxes : {
@@ -56,7 +56,7 @@ class MapCreator {
             ],
             //Turrets
             turrets : [
-                { x:  980, y: 100, r: 30, color: "", speed: 0, shootRate: 2, maxTimeAlive: 9 , missileSpeed: 300 }
+                { x:  980, y: 100, r: 30, color: "", speed: 0, shootRate: 2, maxTimeAlive: 8 , missileSpeed: 1.2 }
             ],
             //Enemies
             enemies : {
