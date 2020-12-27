@@ -16,3 +16,4 @@ function createFullScreenCanvas(){
 	document.body.appendChild(canvas);
 	return canvas;
 }
+

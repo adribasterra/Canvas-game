@@ -659,49 +659,6 @@ class Vec2 {
 
 //#endregion
 
-//#region Collision methods
-
-function CircleRect(circle) {
-    for(var i = 0; i<game.objects.boxes.length; i++){
-        var rx = game.objects.boxes[i].x;
-        var ry = game.objects.boxes[i].y;
-        var rw = game.objects.boxes[i].width;
-        var rh = game.objects.boxes[i].height;
-        var cx = circle.x;
-        var cy = circle.y;
-        var radius = circle.radius;
-        // temporary variables to set edges for testing
-        var testX = circle.x;
-        var testY = circle.y;
-    
-        // which edge is closest?
-        if (cx < rx)         testX = rx;      // test left edge
-        else if (cx > rx+rw) testX = rx+rw;   // right edge
-        if (cy < ry)         testY = ry;      // top edge
-        else if (cy > ry+rh) testY = ry+rh;   // bottom edge
-    
-        // get distance from closest edges
-        var distX = cx-testX;
-        var distY = cy-testY;
-        var distance = Math.sqrt( (distX*distX) + (distY*distY) );
-    
-        // if the distance is less than the radius, collision!
-        if (distance <= radius) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function CheckPlayerCollisionWithWalls(){
-    for (var i = 0; i < game.objects.boxes.length; i++) {
-        if(aabbCollision(game.player, game.objects.boxes[i], true, false, false)){
-            return i;
-        }
-	}
-	return -1;
-}
-
 function aabbCollision(object1, object2, _1isBall, _2isBall, area) {
     if(_1isBall){
         var size1 = object1.radius * 2;
@@ -732,8 +689,6 @@ function aabbCollision(object1, object2, _1isBall, _2isBall, area) {
     }
     return false;
 }
-
-//#endregion
 
 
 function LoadLevel(){
