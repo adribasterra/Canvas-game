@@ -203,102 +203,23 @@ class Player{
         //Movement with keys
         if(!this.hidden){
             //Works not that bad
-            var difference = 3;
-            if (keyPressed[controls.playerUP]) {        // Player holding up
-                if(CircleRect(this)) {
-                    this.y += difference;
-                }
+            var walls = this.checkWallCollision(game.context);
+            if (keyPressed[controls.playerUP]) {            // Player holding up
+                if(this.collision.up) this.y = game.objects.boxes[walls.up].y + game.objects.boxes[walls.up].height + this.radius;
                 else this.y -= this.speed * deltaTime/1000;
             }
-            if (keyPressed[controls.playerDOWN]) {      // Player holding down
-                if(CircleRect(this)) {
-                    this.y -= difference;
-                }
+            if (keyPressed[controls.playerDOWN]) {          // Player holding down
+                if(this.collision.down) this.y = game.objects.boxes[walls.down].y - this.radius;
                 else this.y += this.speed * deltaTime/1000;
             } 
-            if (keyPressed[controls.playerLEFT]) {      // Player holding left
-                if(CircleRect(this)) {
-                    this.x += difference;
-                }
+            if (keyPressed[controls.playerLEFT]) {          // Player holding left
+                if(this.collision.left) this.x = game.objects.boxes[walls.left].x + 20 + this.radius;
                 else this.x -= this.speed * deltaTime/1000;
             }
-            if (keyPressed[controls.playerRIGHT]) {     // Player holding right
-                if(CircleRect(this)) {
-                    this.x -= difference;
-                }
+            if (keyPressed[controls.playerRIGHT]) {         // Player holding right
+                if(this.collision.right) this.x = game.objects.boxes[walls.right].x - this.radius;
                 else this.x += this.speed * deltaTime/1000;
             }
-
-            //#region Attempts
-
-            // //Works bad
-            // var num;
-            // if (keyPressed[controls.playerUP]) {            // Player holding up
-            //     num = CheckPlayerCollisionWithWalls();
-            //     if(num != -1) this.y = game.objects.boxes[num].y + game.objects.boxes[num].height + this.radius;
-            //     else this.y -= this.speed * deltaTime/1000;
-            // }
-            // if (keyPressed[controls.playerDOWN]) {          // Player holding down
-            //     num = CheckPlayerCollisionWithWalls();
-            //     if(num != -1) this.y = game.objects.boxes[num].y - game.objects.boxes[num].height;
-            //     else this.y += this.speed * deltaTime/1000;
-            // }
-            // if (keyPressed[controls.playerLEFT]) {          // Player holding left
-            //     num = CheckPlayerCollisionWithWalls();
-            //     if(num != -1) this.x = game.objects.boxes[num].x + game.objects.boxes[num].width;
-            //     else this.x -= this.speed * deltaTime/1000;
-            // }
-            // if (keyPressed[controls.playerRIGHT]) {         // Player holding right
-            //     num = CheckPlayerCollisionWithWalls();
-            //     if(num != -1) this.x -= game.objects.boxes[num].x - game.objects.boxes[num].width;
-            //     else this.x += this.speed * deltaTime/1000;
-            // }
-
-
-            // //De momento no hace nada
-            // if (keyPressed[controls.playerUP] && !this.collision.up) {          // Player holding up
-            //     this.y -= this.speed * deltaTime/1000;
-            //     this.collision.down = false;
-            // }
-            // if (keyPressed[controls.playerDOWN] && !this.collision.down) {      // Player holding down
-            //     this.y += this.speed * deltaTime/1000;
-            //     this.collision.up = false;
-            // } 
-            // if (keyPressed[controls.playerLEFT] && !this.collision.left) {      // Player holding left
-            //     this.x -= this.speed * deltaTime/1000;
-            //     this.collision.right = false;
-            // }
-            // if (keyPressed[controls.playerRIGHT] && !this.collision.right) {     // Player holding right
-            //     this.x += this.speed * deltaTime/1000;
-            //     this.collision.left = false;
-            // }
-
-            // //Works todavía peor
-            // if(!this.hidden){
-            //     var num;
-            //     if (keyPressed[controls.playerUP]) {        // Player holding up
-            //         this.y -= this.speed * deltaTime/1000;
-            //         num = CheckPlayerCollisionWithWalls();
-            //         if(num != -1) this.y = game.objects.boxes[num].y + this.radius *2;
-            //     }
-            //     if (keyPressed[controls.playerDOWN]) {      // Player holding down
-            //         this.y += this.speed * deltaTime/1000;
-            //         num = CheckPlayerCollisionWithWalls();
-            //         if(num != -1) this.y = game.objects.boxes[num].y - this.radius *2;
-            //     } 
-            //     if (keyPressed[controls.playerLEFT]) {      // Player holding left
-            //         this.x -= this.speed * deltaTime/1000;
-            //         num = CheckPlayerCollisionWithWalls();
-            //         if(num != -1) this.x = game.objects.boxes[num].x - this.radius *2;
-            //     }
-            //     if (keyPressed[controls.playerRIGHT]) {     // Player holding right
-            //         this.x += this.speed * deltaTime/1000;
-            //         num = CheckPlayerCollisionWithWalls();
-            //         if(num != -1) this.x = game.objects.boxes[num].x - this.radius;
-            //     }
-            // }
-            //#endregion
-            
         }
 
         //Hide player
@@ -377,6 +298,34 @@ class Player{
         if(aabbCollision(this, game.objects.finish, true, false, false) && this.hasKey){
             this.finish = true;
         }
+    }
+
+    checkWallCollision(context){
+        var walls = { up: -1, down: -1, left: -1, right: -1 };
+        for (var i = 0; i < game.objects.boxes.length; i++) {
+            if(context.isPointInPath(game.objects.boxes[i].path, this.x, this.y - this.radius)){                    //Up
+                this.collision.up = true;
+                walls.up = i;
+            }
+            if(context.isPointInPath(game.objects.boxes[i].path, this.x, this.y + this.radius)){                    //Down
+                this.collision.down = true;
+                walls.down = i;
+            }
+            if(context.isPointInPath(game.objects.boxes[i].path, this.x - this.radius, this.y + this.radius)){      //Left
+                this.collision.left = true;
+                walls.left = i;
+            }
+            if(context.isPointInPath(game.objects.boxes[i].path, this.x + this.radius, this.y)){                    //Right
+                this.collision.right = true;
+                walls.right = i;
+            }
+        }
+        if(walls.up == -1) this.collision.up = false;
+        if(walls.down == -1) this.collision.down = false;
+        if(walls.left == -1) this.collision.left = false;
+        if(walls.right == -1) this.collision.right = false;
+        
+        return walls;
     }
 
     lowerStealth(){
@@ -855,78 +804,4 @@ function LoadLevel(){
     //End screens
     game.grid.winScreen = new EndGame(level1.config.screens.background, level1.config.screens.color, level1.endScreens.win.text);
     game.grid.loseScreen = new EndGame(level1.config.screens.background, level1.config.screens.color, level1.endScreens.lose.text);
-
-
-    //#region Trash
-    // //Pared abajo
-    // for(var i = 0; i<numBoxesPerRow; i++){
-    //     var x = (i % numBoxesPerRow) * tam + margin;
-    //     var y = game.grid.height + tam/2;
-    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
-    // }
-
-    // //Pared arriba
-    // for(var i = 0; i<numBoxesPerRow; i++){
-    //     var x = (i % numBoxesPerRow) * tam + margin;
-    //     var y = parseInt(i / numBoxesPerRow) * tam + margin;
-    //     game.objects.boxes[i+numBoxesPerRow] = new Rectangle(x, y, tam, tam, boxColor, true);
-    // }
-    
-    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn;
-
-    // //Pared izquierda
-    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
-    //     var x = margin;
-    //     var y = (i % numBoxesPerColumn) * tam + margin;
-    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
-    // }
-
-    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn;
-
-    // //Pared derecha
-    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
-    //     var x = game.grid.width + tam/2;
-    //     var y = (i % numBoxesPerColumn) * tam + margin;
-    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
-    // }
-
-    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn -10;
-
-    // //Pared medio alta 1
-    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
-    //     var x = 250;
-    //     var y = (i % numBoxesPerColumn) * tam - tam/2;
-    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
-    // }
-
-
-    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn - 10;
-
-    // //Pared medio baja 1
-    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
-    //     var x = 500;
-    //     var y = (i % numBoxesPerColumn + numBoxesPerColumn/2) * tam + tam*2;
-    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
-    // }
-    
-    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn - 16;
-
-    // //Pared medio h 1
-    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
-    //     var x = (i % numBoxesPerColumn + numBoxesPerColumn/2) * tam - tam*2;
-    //     var y = 500;
-    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
-    // }
-
-    // numTotalBoxes = game.objects.boxes.length + numBoxesPerColumn - 20;
-    
-    // //Pared medio alta 2
-    // for(var i = game.objects.boxes.length; i<numTotalBoxes; i++){
-    //     var x = (i % numBoxesPerColumn + numBoxesPerColumn/2) * tam - tam*4;
-    //     var y = 200;
-    //     game.objects.boxes[i] = new Rectangle(x, y, tam, tam, boxColor, true);
-    // }
-
-    //#endregion
-
 }

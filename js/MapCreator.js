@@ -7,8 +7,6 @@ class MapCreator {
     constructor(){
         this.ballsColor = "#6262d6";
         this.arcColor = "#c1e1ffa0";
-        this.boxesPerRow = 96;
-        this.boxesPerColumn = 54;
         this.level1 = {
             grid : {
                 x : 30,
