@@ -1,7 +1,4 @@
 
-// const gameHeight = 1080;
-// const gameWidth = 1920;
-
 class MapCreator {
 
     constructor(){

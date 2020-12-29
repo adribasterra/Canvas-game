@@ -390,7 +390,7 @@ class Ball{
     }
 }
 
-class Arco{
+class Arc{
     constructor(x, y, radius, startAngle, rotationSpeed, color){
         this.x = x;
         this.y = y;
@@ -659,6 +659,7 @@ class Vec2 {
 
 //#endregion
 
+
 function aabbCollision(object1, object2, _1isBall, _2isBall, area) {
     if(_1isBall){
         var size1 = object1.radius * 2;
@@ -727,7 +728,7 @@ function LoadLevel(){
         var ballsData = level1.enemies.balls[i];
         var arcsData  = level1.enemies.arcs[i];
         var ball = new Ball(ballsData.x + center.left, ballsData.y + center.top, level1.config.balls.radius, level1.config.balls.color);
-        var arc = new Arco(arcsData.x + center.left, arcsData.y + center.top, arcsData.r, arcsData.angle, arcsData.speed, level1.config.arcs.color);
+        var arc = new Arc(arcsData.x + center.left, arcsData.y + center.top, arcsData.r, arcsData.angle, arcsData.speed, level1.config.arcs.color);
         game.objects.enemies[i] = new Enemy(ball, arc, creator.level1.enemies.speeds[i], creator.level1.enemies.types[i]);
     }
 
